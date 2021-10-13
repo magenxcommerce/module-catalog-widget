@@ -6,39 +6,18 @@
 
 namespace Magento\CatalogWidget\Block\Product;
 
-use Magento\Catalog\Api\CategoryRepositoryInterface;
-use Magento\Catalog\Block\Product\AbstractProduct;
-use Magento\Catalog\Block\Product\Context;
-use Magento\Catalog\Block\Product\Widget\Html\Pager;
-use Magento\Catalog\Model\Product;
-use Magento\Catalog\Model\Product\Visibility;
-use Magento\Catalog\Model\ResourceModel\Product\Collection;
-use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory;
-use Magento\Catalog\Pricing\Price\FinalPrice;
-use Magento\CatalogWidget\Model\Rule;
-use Magento\Framework\App\ActionInterface;
-use Magento\Framework\App\Http\Context as HttpContext;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\DataObject\IdentityInterface;
-use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Pricing\PriceCurrencyInterface;
 use Magento\Framework\Serialize\Serializer\Json;
-use Magento\Framework\Url\EncoderInterface;
-use Magento\Framework\View\LayoutFactory;
-use Magento\Framework\View\LayoutInterface;
-use Magento\Rule\Model\Condition\Combine;
-use Magento\Rule\Model\Condition\Sql\Builder as SqlBuilder;
 use Magento\Widget\Block\BlockInterface;
-use Magento\Widget\Helper\Conditions;
 
 /**
  * Catalog Products List widget block
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
- * @SuppressWarnings(PHPMD.ExcessiveParameterList)
  */
-class ProductsList extends AbstractProduct implements BlockInterface, IdentityInterface
+class ProductsList extends \Magento\Catalog\Block\Product\AbstractProduct implements BlockInterface, IdentityInterface
 {
     /**
      * Default value for products count that will be shown
@@ -48,7 +27,7 @@ class ProductsList extends AbstractProduct implements BlockInterface, IdentityIn
     /**
      * Name of request parameter for page number value
      *
-     * @deprecated @see $this->getData('page_var_name')
+     * @deprecated
      */
     const PAGE_VAR_NAME = 'np';
 
@@ -65,41 +44,41 @@ class ProductsList extends AbstractProduct implements BlockInterface, IdentityIn
     /**
      * Instance of pager block
      *
-     * @var Pager
+     * @var \Magento\Catalog\Block\Product\Widget\Html\Pager
      */
     protected $pager;
 
     /**
-     * @var HttpContext
+     * @var \Magento\Framework\App\Http\Context
      */
     protected $httpContext;
 
     /**
      * Catalog product visibility
      *
-     * @var Visibility
+     * @var \Magento\Catalog\Model\Product\Visibility
      */
     protected $catalogProductVisibility;
 
     /**
      * Product collection factory
      *
-     * @var CollectionFactory
+     * @var \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory
      */
     protected $productCollectionFactory;
 
     /**
-     * @var SqlBuilder
+     * @var \Magento\Rule\Model\Condition\Sql\Builder
      */
     protected $sqlBuilder;
 
     /**
-     * @var Rule
+     * @var \Magento\CatalogWidget\Model\Rule
      */
     protected $rule;
 
     /**
-     * @var Conditions
+     * @var \Magento\Widget\Helper\Conditions
      */
     protected $conditionsHelper;
 
@@ -116,54 +95,26 @@ class ProductsList extends AbstractProduct implements BlockInterface, IdentityIn
     private $json;
 
     /**
-     * @var LayoutFactory
-     */
-    private $layoutFactory;
-
-    /**
-     * @var EncoderInterface|null
-     */
-    private $urlEncoder;
-
-    /**
-     * @var RendererList
-     */
-    private $rendererListBlock;
-
-    /**
-     * @var CategoryRepositoryInterface
-     */
-    private $categoryRepository;
-
-    /**
-     * @param Context $context
-     * @param CollectionFactory $productCollectionFactory
-     * @param Visibility $catalogProductVisibility
-     * @param HttpContext $httpContext
-     * @param SqlBuilder $sqlBuilder
-     * @param Rule $rule
-     * @param Conditions $conditionsHelper
+     * @param \Magento\Catalog\Block\Product\Context $context
+     * @param \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory $productCollectionFactory
+     * @param \Magento\Catalog\Model\Product\Visibility $catalogProductVisibility
+     * @param \Magento\Framework\App\Http\Context $httpContext
+     * @param \Magento\Rule\Model\Condition\Sql\Builder $sqlBuilder
+     * @param \Magento\CatalogWidget\Model\Rule $rule
+     * @param \Magento\Widget\Helper\Conditions $conditionsHelper
      * @param array $data
      * @param Json|null $json
-     * @param LayoutFactory|null $layoutFactory
-     * @param EncoderInterface|null $urlEncoder
-     * @param CategoryRepositoryInterface|null $categoryRepository
-     *
-     * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
-        Context $context,
-        CollectionFactory $productCollectionFactory,
-        Visibility $catalogProductVisibility,
-        HttpContext $httpContext,
-        SqlBuilder $sqlBuilder,
-        Rule $rule,
-        Conditions $conditionsHelper,
+        \Magento\Catalog\Block\Product\Context $context,
+        \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory $productCollectionFactory,
+        \Magento\Catalog\Model\Product\Visibility $catalogProductVisibility,
+        \Magento\Framework\App\Http\Context $httpContext,
+        \Magento\Rule\Model\Condition\Sql\Builder $sqlBuilder,
+        \Magento\CatalogWidget\Model\Rule $rule,
+        \Magento\Widget\Helper\Conditions $conditionsHelper,
         array $data = [],
-        Json $json = null,
-        LayoutFactory $layoutFactory = null,
-        EncoderInterface $urlEncoder = null,
-        CategoryRepositoryInterface $categoryRepository = null
+        Json $json = null
     ) {
         $this->productCollectionFactory = $productCollectionFactory;
         $this->catalogProductVisibility = $catalogProductVisibility;
@@ -172,10 +123,6 @@ class ProductsList extends AbstractProduct implements BlockInterface, IdentityIn
         $this->rule = $rule;
         $this->conditionsHelper = $conditionsHelper;
         $this->json = $json ?: ObjectManager::getInstance()->get(Json::class);
-        $this->layoutFactory = $layoutFactory ?: ObjectManager::getInstance()->get(LayoutFactory::class);
-        $this->urlEncoder = $urlEncoder ?: ObjectManager::getInstance()->get(EncoderInterface::class);
-        $this->categoryRepository = $categoryRepository ?? ObjectManager::getInstance()
-                ->get(CategoryRepositoryInterface::class);
         parent::__construct(
             $context,
             $data
@@ -198,18 +145,14 @@ class ProductsList extends AbstractProduct implements BlockInterface, IdentityIn
 
         $this->addData([
             'cache_lifetime' => 86400,
-            'cache_tags' => [
-                Product::CACHE_TAG,
-            ],
-        ]);
+            'cache_tags' => [\Magento\Catalog\Model\Product::CACHE_TAG,
+            ], ]);
     }
 
     /**
      * Get key pieces for caching block content
      *
      * @return array
-     * @SuppressWarnings(PHPMD.RequestAwareBlockMethod)
-     * @throws NoSuchEntityException
      */
     public function getCacheKeyInfo()
     {
@@ -223,9 +166,8 @@ class ProductsList extends AbstractProduct implements BlockInterface, IdentityIn
             $this->_storeManager->getStore()->getId(),
             $this->_design->getDesignTheme()->getId(),
             $this->httpContext->getValue(\Magento\Customer\Model\Context::CONTEXT_GROUP),
-            (int)$this->getRequest()->getParam($this->getData('page_var_name'), 1),
+            intval($this->getRequest()->getParam($this->getData('page_var_name'), 1)),
             $this->getProductsPerPage(),
-            $this->getProductsCount(),
             $conditions,
             $this->json->serialize($this->getRequest()->getParams()),
             $this->getTemplate(),
@@ -234,11 +176,18 @@ class ProductsList extends AbstractProduct implements BlockInterface, IdentityIn
     }
 
     /**
-     * @inheritdoc
+     * Return HTML block with tier price
+     *
+     * @param \Magento\Catalog\Model\Product $product
+     * @param string $priceType
+     * @param string $renderZone
+     * @param array $arguments
+     * @return string
+     *
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
     public function getProductPriceHtml(
-        Product $product,
+        \Magento\Catalog\Model\Product $product,
         $priceType = null,
         $renderZone = \Magento\Framework\Pricing\Render::ZONE_ITEM_LIST,
         array $arguments = []
@@ -256,7 +205,7 @@ class ProductsList extends AbstractProduct implements BlockInterface, IdentityIn
             ? $arguments['display_minimal_price']
             : true;
 
-        /** @var \Magento\Framework\Pricing\Render $priceRender */
+            /** @var \Magento\Framework\Pricing\Render $priceRender */
         $priceRender = $this->getLayout()->getBlock('product.price.render.default');
         if (!$priceRender) {
             $priceRender = $this->getLayout()->createBlock(
@@ -267,51 +216,18 @@ class ProductsList extends AbstractProduct implements BlockInterface, IdentityIn
         }
 
         $price = $priceRender->render(
-            FinalPrice::PRICE_CODE,
+            \Magento\Catalog\Pricing\Price\FinalPrice::PRICE_CODE,
             $product,
             $arguments
         );
-
+        
         return $price;
     }
 
     /**
-     * @inheritdoc
-     */
-    protected function getDetailsRendererList()
-    {
-        if (empty($this->rendererListBlock)) {
-            /** @var $layout LayoutInterface */
-            $layout = $this->layoutFactory->create(['cacheable' => false]);
-            $layout->getUpdate()->addHandle('catalog_widget_product_list')->load();
-            $layout->generateXml();
-            $layout->generateElements();
-
-            $this->rendererListBlock = $layout->getBlock('category.product.type.widget.details.renderers');
-        }
-        return $this->rendererListBlock;
-    }
-
-    /**
-     * Get post parameters.
+     * Before rendering html, but after trying to load cache
      *
-     * @param Product $product
-     * @return array
-     */
-    public function getAddToCartPostParams(Product $product)
-    {
-        $url = $this->getAddToCartUrl($product);
-        return [
-            'action' => $url,
-            'data' => [
-                'product' => $product->getEntityId(),
-                ActionInterface::PARAM_NAME_URL_ENCODED => $this->urlEncoder->encode($url),
-            ]
-        ];
-    }
-
-    /**
-     * @inheritdoc
+     * @return $this
      */
     protected function _beforeToHtml()
     {
@@ -322,24 +238,16 @@ class ProductsList extends AbstractProduct implements BlockInterface, IdentityIn
     /**
      * Prepare and return product collection
      *
-     * @return Collection
-     * @SuppressWarnings(PHPMD.RequestAwareBlockMethod)
-     * @throws LocalizedException
+     * @return \Magento\Catalog\Model\ResourceModel\Product\Collection
      */
     public function createCollection()
     {
-        /** @var $collection Collection */
+        /** @var $collection \Magento\Catalog\Model\ResourceModel\Product\Collection */
         $collection = $this->productCollectionFactory->create();
-
-        if ($this->getData('store_id') !== null) {
-            $collection->setStoreId($this->getData('store_id'));
-        }
-
         $collection->setVisibility($this->catalogProductVisibility->getVisibleInCatalogIds());
 
         $collection = $this->_addProductAttributesAndPrices($collection)
             ->addStoreFilter()
-            ->addAttributeToSort('created_at', 'desc')
             ->setPageSize($this->getPageSize())
             ->setCurPage($this->getRequest()->getParam($this->getData('page_var_name'), 1));
 
@@ -357,37 +265,9 @@ class ProductsList extends AbstractProduct implements BlockInterface, IdentityIn
     }
 
     /**
-     * Update conditions if the category is an anchor category
-     *
-     * @param array $condition
-     * @return array
-     */
-    private function updateAnchorCategoryConditions(array $condition): array
-    {
-        if (array_key_exists('value', $condition)) {
-            $categoryId = $condition['value'];
-
-            try {
-                $category = $this->categoryRepository->get($categoryId, $this->_storeManager->getStore()->getId());
-            } catch (NoSuchEntityException $e) {
-                return $condition;
-            }
-
-            $children = $category->getIsAnchor() ? $category->getChildren(true) : [];
-            if ($children) {
-                $children = explode(',', $children);
-                $condition['operator'] = "()";
-                $condition['value'] = array_merge([$categoryId], $children);
-            }
-        }
-
-        return $condition;
-    }
-
-    /**
      * Get conditions
      *
-     * @return Combine
+     * @return \Magento\Rule\Model\Condition\Combine
      */
     protected function getConditions()
     {
@@ -400,14 +280,10 @@ class ProductsList extends AbstractProduct implements BlockInterface, IdentityIn
         }
 
         foreach ($conditions as $key => $condition) {
-            if (!empty($condition['attribute'])) {
-                if (in_array($condition['attribute'], ['special_from_date', 'special_to_date'])) {
-                    $conditions[$key]['value'] = date('Y-m-d H:i:s', strtotime($condition['value']));
-                }
-
-                if ($condition['attribute'] == 'category_ids') {
-                    $conditions[$key] = $this->updateAnchorCategoryConditions($condition);
-                }
+            if (!empty($condition['attribute'])
+                && in_array($condition['attribute'], ['special_from_date', 'special_to_date'])
+            ) {
+                $conditions[$key]['value'] = date('Y-m-d H:i:s', strtotime($condition['value']));
             }
         }
 
@@ -473,15 +349,14 @@ class ProductsList extends AbstractProduct implements BlockInterface, IdentityIn
      * Render pagination HTML
      *
      * @return string
-     * @throws LocalizedException
      */
     public function getPagerHtml()
     {
         if ($this->showPager() && $this->getProductCollection()->getSize() > $this->getProductsPerPage()) {
             if (!$this->pager) {
                 $this->pager = $this->getLayout()->createBlock(
-                    Pager::class,
-                    $this->getWidgetPagerBlockName()
+                    \Magento\Catalog\Block\Product\Widget\Html\Pager::class,
+                    'widget.products.list.pager'
                 );
 
                 $this->pager->setUseContainer(true)
@@ -506,17 +381,16 @@ class ProductsList extends AbstractProduct implements BlockInterface, IdentityIn
      */
     public function getIdentities()
     {
-        $identities = [[]];
+        $identities = [];
         if ($this->getProductCollection()) {
             foreach ($this->getProductCollection() as $product) {
                 if ($product instanceof IdentityInterface) {
-                    $identities[] = $product->getIdentities();
+                    $identities = array_merge($identities, $product->getIdentities());
                 }
             }
         }
-        $identities = array_merge(...$identities);
 
-        return $identities ?: [Product::CACHE_TAG];
+        return $identities ?: [\Magento\Catalog\Model\Product::CACHE_TAG];
     }
 
     /**
@@ -538,42 +412,9 @@ class ProductsList extends AbstractProduct implements BlockInterface, IdentityIn
     private function getPriceCurrency()
     {
         if ($this->priceCurrency === null) {
-            $this->priceCurrency = ObjectManager::getInstance()
+            $this->priceCurrency = \Magento\Framework\App\ObjectManager::getInstance()
                 ->get(PriceCurrencyInterface::class);
         }
         return $this->priceCurrency;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getAddToCartUrl($product, $additional = [])
-    {
-        $requestingPageUrl = $this->getRequest()->getParam('requesting_page_url');
-
-        if (!empty($requestingPageUrl)) {
-            $additional['useUencPlaceholder'] = true;
-            $url = parent::getAddToCartUrl($product, $additional);
-            return str_replace('%25uenc%25', $this->urlEncoder->encode($requestingPageUrl), $url);
-        }
-
-        return parent::getAddToCartUrl($product, $additional);
-    }
-
-    /**
-     * Get widget block name
-     *
-     * @return string
-     */
-    private function getWidgetPagerBlockName()
-    {
-        $pageName = $this->getData('page_var_name');
-        $pagerBlockName = 'widget.products.list.pager';
-
-        if (!$pageName) {
-            return $pagerBlockName;
-        }
-
-        return $pagerBlockName . '.' . $pageName;
     }
 }
